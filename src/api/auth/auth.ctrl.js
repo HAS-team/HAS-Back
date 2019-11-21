@@ -56,10 +56,13 @@ export const Login = async (ctx) => {
     let token = null;
     token = await generateToken(payload);
 
+    const is_admin = founded.class <= 0 ? true : false
+
     console.log(token);
 
     ctx.body = {
-        token: token
+        token: token,
+        is_admin : is_admin
     };
 
     console.log(`로그인에 성공하였습니다.`);
