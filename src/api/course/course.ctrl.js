@@ -407,3 +407,82 @@ export const SetStatus = async (ctx) => {
     ctx.status = 200;
 
 }
+
+export const CreateCourse = async (ctx) => {
+    const CreativeCourse = Joi.object().keys({
+        courseIdx: Joi.number().required(),
+        sort: Joi.string().required(),
+        name: Joi.string().required(),
+        target: Joi.string().required(),
+        capacity: Joi.number().required(),
+        lectTime: Joi.string().required(),
+        operTime: Joi.string().required(),
+        totalTime: Joi.number().required(),
+        content: Joi.string().required(),
+        openTime: Joi.date().required(),
+        closeTime: Joi.date().required()
+    });
+    console.log(ctx.request.body)
+    const result = Joi.validate(ctx.request.body, CreativeCourse)
+
+    if (result.error) {
+        console.log("CreateCourse - Joi 형식 에러")
+        ctx.status = 400;
+        ctx.body = {
+            "error": "001"
+        }
+        return;
+    }
+
+    // 토큰 값을 받는다 -> 해석을 한다 -> email 나온다 -> email을 토대로
+    // 유저 정보를 찾음 -> 유저가 어드민이 아닐시 return
+
+    const token = await decodeToken(ctx.header.token);
+
+    if (token == null) {
+        console.log(`Apply - 올바르지 않은 토큰입니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "error": "009"
+        }
+        return;
+    }
+
+    const userIn = await user_info.findOne({
+        where: {
+            email: token.email
+        }
+    })
+
+    console.log(userIn.class);
+
+    if(userIn.class > 3)
+    {
+        console.log("CreateCourse - 권한이 없습니다. (관리자가 아닙니다.)")
+        ctx.status = 400;
+        ctx.body = {
+            "error": "007"
+        }
+        return;
+    }
+
+    await course_info.create({
+        "courseIdx": ctx.request.body.courseIdx,
+        "sort": ctx.request.body.sort,
+        "name": ctx.request.body.name,
+        "target": ctx.request.body.target,
+        "capacity": ctx.request.body.capacity,
+        "studentSize": 0,
+        "lectTime": ctx.request.body.lectTime,
+        "operTime": ctx.request.body.operTime,
+        "totalTime": ctx.request.body.totalTime,
+        "content": ctx.request.body.content,
+        "openTime": ctx.request.body.openTime,
+        "closeTime": ctx.request.body.closeTime,
+        "status": 1
+    });
+
+    console.log(`Register - 새로운 강좌가 저장되었습니다.`);
+
+    ctx.status = 200;
+}
