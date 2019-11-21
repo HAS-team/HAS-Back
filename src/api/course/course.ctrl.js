@@ -32,7 +32,7 @@ export const apply = async (ctx) => {
         }
         return;
     }
-    
+
     var can_apply = 1;
 
     const userIn = await user_info.findOne({
@@ -42,9 +42,9 @@ export const apply = async (ctx) => {
     })
 
     const date = await course_info.findOne({
-       where: {
-           courseIdx: ctx.request.body.courseIdx
-       } 
+        where: {
+            courseIdx: ctx.request.body.courseIdx
+        }
     });
 
     var dateArray = date.lectTime.split('');
@@ -55,7 +55,7 @@ export const apply = async (ctx) => {
         }
     });
 
-    if(date.target.indexOf(userIn.grade) == -1){
+    if (date.target.indexOf(userIn.grade) == -1) {
         can_apply = 3;
         console.log(`Apply - 신청 가능한 학년이 아닙니다.`);
         ctx.status = 400;
@@ -65,7 +65,7 @@ export const apply = async (ctx) => {
         return;
     }
 
-    if(date.capacity <= date.studentSize){
+    if (date.capacity <= date.studentSize) {
         can_apply = 5;
         console.log(`Apply - 정원이 가득 찼습니다.`);
         ctx.status = 400;
@@ -75,7 +75,7 @@ export const apply = async (ctx) => {
         return;
     }
 
-    if(date.status == 0){ //변경
+    if (date.status == 0) { //변경
         can_apply = 4;
         console.log(`Apply - 신청 가능한 강좌가 아닙니다.`);
         ctx.status = 400;
@@ -87,15 +87,15 @@ export const apply = async (ctx) => {
 
     if (founded == null) {
         can_apply = 1;
-    }else{
+    } else {
         var i = 0;
-        while(founded[i]){
+        while (founded[i]) {
             var istrue = await course_info.findOne({
-                where : {
-                    courseIdx : founded[i].courseIdx
+                where: {
+                    courseIdx: founded[i].courseIdx
                 }
             });
-            if(istrue.courseIdx ==  ctx.request.body.courseIdx){
+            if (istrue.courseIdx == ctx.request.body.courseIdx) {
                 can_apply = 2;
                 console.log(`Apply - 이미 신청된 강좌입니다.`);
                 ctx.status = 400;
@@ -106,8 +106,8 @@ export const apply = async (ctx) => {
             }
             var test_date = istrue.lectTime.split('');
             var j = 0;
-            while(dateArray[j]){
-                if(test_date.indexOf(dateArray[i]) != -1){
+            while (dateArray[j]) {
+                if (test_date.indexOf(dateArray[i]) != -1) {
                     can_apply = 1;
                     console.log(`Apply - 요일이 겹칩니다.`);
                     ctx.status = 400;
@@ -121,41 +121,41 @@ export const apply = async (ctx) => {
             i++;
         }
     }
-    if(can_apply == 1){
+    if (can_apply == 1) {
         await course_apply.create({
             "email": user.email,
             "courseIdx": ctx.request.body.courseIdx,
             "time": Date.now()
         });
-    }else if(can_apply == 0){
+    } else if (can_apply == 0) {
         console.log(`Apply - 요일이 겹칩니다.`);
         ctx.status = 400;
         ctx.body = {
             "error": "001"
         }
         return;
-    }else if(can_apply == 2){
+    } else if (can_apply == 2) {
         console.log(`Apply - 이미 신청된 강좌입니다.`);
         ctx.status = 400;
         ctx.body = {
             "error": "002"
         }
         return;
-    }else if(can_apply == 3){
+    } else if (can_apply == 3) {
         console.log(`Apply - 신청 가능한 학년이 아닙니다.`);
         ctx.status = 400;
         ctx.body = {
             "error": "003"
         }
         return;
-    }else if(can_apply == 4){
+    } else if (can_apply == 4) {
         console.log(`Apply - 신청 가능한 강좌가 아닙니다.`);
         ctx.status = 400;
         ctx.body = {
             "error": "004"
         }
         return;
-    }else if(can_apply == 5){
+    } else if (can_apply == 5) {
         console.log(`Apply - 정원이 가득 찼습니다.`);
         ctx.status = 400;
         ctx.body = {
@@ -199,9 +199,9 @@ export const cancel = async (ctx) => {
             courseIdx: ctx.request.body.courseIdx
         }
     });
-    if(founded){
+    if (founded) {
         await founded.destroy();
-    }else {
+    } else {
         console.log(`Apply - 신청되어 있지 않은 강좌입니다.`);
         ctx.status = 400;
         ctx.body = {
@@ -363,7 +363,7 @@ export const SetStatus = async (ctx) => {
         }
     })
 
-    if (account.grade != 4) {
+    if (account.class > 0) {
         console.log(`SetStatus - 권한이 없습니다.`);
         ctx.status = 403;
         ctx.body = {
@@ -410,7 +410,6 @@ export const SetStatus = async (ctx) => {
 
 export const CreateCourse = async (ctx) => {
     const CreativeCourse = Joi.object().keys({
-        courseIdx: Joi.number().required(),
         sort: Joi.string().required(),
         name: Joi.string().required(),
         target: Joi.string().required(),
@@ -422,7 +421,7 @@ export const CreateCourse = async (ctx) => {
         openTime: Joi.date().required(),
         closeTime: Joi.date().required()
     });
-    console.log(ctx.request.body)
+
     const result = Joi.validate(ctx.request.body, CreativeCourse)
 
     if (result.error) {
@@ -456,8 +455,7 @@ export const CreateCourse = async (ctx) => {
 
     console.log(userIn.class);
 
-    if(userIn.class > 3)
-    {
+    if (userIn.class > 0) {
         console.log("CreateCourse - 권한이 없습니다. (관리자가 아닙니다.)")
         ctx.status = 400;
         ctx.body = {
@@ -467,7 +465,6 @@ export const CreateCourse = async (ctx) => {
     }
 
     await course_info.create({
-        "courseIdx": ctx.request.body.courseIdx,
         "sort": ctx.request.body.sort,
         "name": ctx.request.body.name,
         "target": ctx.request.body.target,
@@ -483,6 +480,46 @@ export const CreateCourse = async (ctx) => {
     });
 
     console.log(`Register - 새로운 강좌가 저장되었습니다.`);
+
+    ctx.status = 200;
+}
+
+export const DeleteCourse = async (ctx) => {
+    //쿼리에서 강좌 번호 받아오기
+    const course_id = ctx.request.query.course_id
+
+    const founded = await course_info.findOne({
+        where: {
+            courseIdx: course_id
+        }
+    })
+
+    //로그인 한 유저인가?
+    const user = await decodeToken(ctx.header.token);
+
+    if (user == null) {
+        console.log(`DeleteCourse - 올바르지 않은 토큰입니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //관리자인가
+    if (user.class > 0) {
+        console.log(`DeleteCourse - 권한이 없습니다.`);
+        ctx.status = 403;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //지우기
+    await founded.destroy();
+
+    console.log(`DeleteCourse - 강좌를 삭제하였습니다.`)
 
     ctx.status = 200;
 }
