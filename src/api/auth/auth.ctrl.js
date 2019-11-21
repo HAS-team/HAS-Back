@@ -105,7 +105,7 @@ export const Register = async (ctx) => {
     console.log(process.env.Password_KEY);
     const password = crypto.createHmac('sha256', process.env.Password_KEY).update(ctx.request.body.password).digest('hex');
 
-    await account.create({
+    await user_info.create({
         "email": ctx.request.body.email,
         "password": password,
         "name": ctx.request.body.name,
