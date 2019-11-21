@@ -5,8 +5,8 @@ export const CourseApply = (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
-        userIdx: {
-            type: DataTypes.INTEGER,
+        email: {
+            type: DataTypes.STRING(60),
             allowNull: false
         },
         courseIdx: {
