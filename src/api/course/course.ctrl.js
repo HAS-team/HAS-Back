@@ -211,3 +211,199 @@ export const cancel = async (ctx) => {
     }
     ctx.status = 200;
 }
+
+export const CourseList = async (ctx) => {
+    //로그인 한 유저인가?
+    const user = await decodeToken(ctx.header.token);
+
+    if (user == null) {
+        console.log(`CourseList - 올바르지 않은 토큰입니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //유저가 신청한 강좌 불러오기
+    const applied = await course_apply.findOne({
+        where: {
+            email: user.email
+        }
+    })
+
+    let applied_ids = [];
+
+    for (var i in applied) {
+        applied_ids.push(applied[i].courseIdx)
+    }
+
+
+    //전체 강좌 불러오기
+    const list = await course_info.findAll()
+
+    let courseArray = [];
+
+    for (var i in list) {
+        const record = {
+            sort: list[i].sort,
+            name: list[i].name,
+            target: list[i].target,
+            capacity: list[i].capacity,
+            studentSize: list[i].studentSize,
+            lectTime: list[i].lectTime,
+            operTime: list[i].operTime,
+            totalTime: list[i].totalTime,
+            content: list[i].content,
+            openTime: list[i].openTime,
+            closeTime: list[i].closeTime,
+            status: list[i].status,
+        }
+        if (list[i].courseIdx in applied_ids) {
+            courseArray.unshift(record)
+        }
+        else {
+            courseArray.push(record);
+        }
+    }
+
+    console.log(courseArray)
+
+    ctx.status = 200
+    ctx.body = {
+        "courses": courseArray
+    }
+}
+
+export const StudentList = async (ctx) => {
+    //로그인 한 유저인가?
+    const user = await decodeToken(ctx.header.token);
+
+    if (user == null) {
+        console.log(`StudentList - 올바르지 않은 토큰입니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //원하는 강좌의 번호 확인
+    const course_id = ctx.request.query.course_id
+
+    const student_list = await course_apply.findAll({
+        where: {
+            courseIdx: course_id
+        }
+    })
+
+    //학생 정보 불러와서 배열에 저장
+    let studentArray = [];
+
+    for (var i in student_list) {
+        const student = await user_info.findOne({
+            where: {
+                email: student_list[i].email
+            }
+        });
+
+        const record = {
+            grade: student.grade,
+            class: student.class,
+            no: student.no,
+            name: student.name
+        }
+
+        studentArray.push(record)
+    }
+
+    console.log(`StudentList - 수강 신청 목록을 반환했습니다. / 강좌 : ${ctx.request.query.course_id}`)
+
+    ctx.status = 200;
+    ctx.body = {
+        "students": studentArray
+    }
+}
+
+export const SetStatus = async (ctx) => {
+    //Joi 형식 검사
+    const StatusInput = Joi.object().keys({
+        sort: Joi.string().required(),
+        openTime: Joi.date().required(),
+        closeTime: Joi.date().required()
+    });
+
+    const Result = Joi.validate(ctx.request.body, StatusInput);
+
+    if (Result.error) {
+        console.log(`SetStatus - Joi 형식 에러`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "001"
+        }
+        return;
+    }
+
+    //로그인 한 유저인가?
+    const user = await decodeToken(ctx.header.token);
+
+    if (user == null) {
+        console.log(`SetStatus - 올바르지 않은 토큰입니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //어드민인지 확인
+    const account = await user_info.findOne({
+        where: {
+            email: user.email
+        }
+    })
+
+    if (account.grade != 4) {
+        console.log(`SetStatus - 권한이 없습니다.`);
+        ctx.status = 403;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //수정하려는 강좌 조회
+    const list = await course_info.findAll({
+        where: {
+            sort: ctx.request.body.sort
+        }
+    })
+
+    if (list == null) {
+        console.log(`SetStatus - 수정할 강좌가 없습니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //시간 설정
+    for (var i in list) {
+        const course = await course_info.findOne({
+            where: {
+                courseIdx: list[i].courseIdx
+            }
+        });
+
+        await course.update({
+            openTime: ctx.request.body.openTime,
+            closeTime: ctx.request.body.closeTime
+        })
+    }
+
+    console.log(`SetStatus - 시간 설정이 완료되었습니다.`)
+
+    ctx.status = 200;
+
+}
