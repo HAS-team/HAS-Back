@@ -1,0 +1,37 @@
+{
+  "name": "has-back",
+  "version": "1.0.0",
+  "description": "This is HAS Backend.",
+  "main": "index.js",
+  "scripts": {
+    "start": "cross-env NODE_PATH=src babel-node src/index.js",
+    "dev": "cross-env NODE_PATH=src nodemon --exec babel-node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HAS-team/HAS-Back.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HAS-team/HAS-Back/issues"
+  },
+  "homepage": "https://github.com/HAS-team/HAS-Back#readme",
+  "dependencies": {
+    "@koa/cors": "^3.0.0",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "cross-env": "^6.0.3",
+    "dotenv": "^8.2.0",
+    "joi": "^14.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "koa": "^2.11.0",
+    "koa-bodyparser": "^4.2.1",
+    "koa-router": "^7.4.0",
+    "mariadb": "^2.1.3",
+    "mysql": "^2.17.1",
+    "sequelize": "^5.21.2",
+    "sequelize-cli": "^5.5.1"
+  }
+}
