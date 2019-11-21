@@ -17,6 +17,10 @@ export const CourseInfo = (sequelize, DataTypes) => {
             type: DataTypes.STRING(5),
             allowNull: false
         },
+        teacher: {
+            type: DataTypes.STRING(10),
+            allowNull: false
+        },
         capacity: {
             type: DataTypes.INTEGER,
             allowNull: false
@@ -48,10 +52,6 @@ export const CourseInfo = (sequelize, DataTypes) => {
         closeTime: {
             type: DataTypes.DATE,
             allowNull: false
-        },
-        status: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0
         }
     })
 }

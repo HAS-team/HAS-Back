@@ -212,6 +212,54 @@ export const cancel = async (ctx) => {
     ctx.status = 200;
 }
 
+export const CourseDetail = async (ctx) => {
+    //로그인 한 유저인가?
+    const user = await decodeToken(ctx.header.token);
+
+    if (user == null) {
+        console.log(`CourseDetail - 올바르지 않은 토큰입니다.`);
+        ctx.status = 400;
+        ctx.body = {
+            "code": "009"
+        }
+        return;
+    }
+
+    //전체 강좌 불러오기
+    const founded = await course_info.findOne({
+        where : {
+            courseIdx: ctx.request.query.course_id
+        }
+    })
+
+    var status = 1;
+
+    if (founded.openTime > Date.now() || founded.closeTime < Date.now()) {
+        status = 0
+    }
+    if (founded.capacity <= founded.studentSize) {
+        status = 0
+    }
+
+    ctx.status = 200
+
+    ctx.body = {
+        "sort" : founded.sort,
+        "name": founded.name,
+        "target": founded.target,
+        "capacity": founded.capacity,
+        "studentSize": founded.studentSize,
+        "teacher": founded.teacher,
+        "lectTime": founded.lectTime,
+        "operTime": founded.operTime,
+        "totalTime": founded.totalTime,
+        "content": founded.content,
+        "openTime": founded.openTime,
+        "closeTime": founded.closeTime,
+        "status": status
+    }
+}
+
 export const CourseList = async (ctx) => {
     //로그인 한 유저인가?
     const user = await decodeToken(ctx.header.token);
@@ -244,20 +292,26 @@ export const CourseList = async (ctx) => {
 
     let courseArray = [];
 
+    var status = 1;
+
     for (var i in list) {
+        if (list[i].openTime > Date.now() || list[i].closeTime < Date.now()) {
+            status = 0
+        }
+        if (list[i].capacity <= list[i].studentSize){
+            status = 0
+        }
+
         const record = {
+            courseIdx: list[i].courseIdx,
             sort: list[i].sort,
             name: list[i].name,
             target: list[i].target,
-            capacity: list[i].capacity,
-            studentSize: list[i].studentSize,
+            teacher: list[i].teacher,
             lectTime: list[i].lectTime,
             operTime: list[i].operTime,
             totalTime: list[i].totalTime,
-            content: list[i].content,
-            openTime: list[i].openTime,
-            closeTime: list[i].closeTime,
-            status: list[i].status,
+            status: status
         }
         if (list[i].courseIdx in applied_ids) {
             courseArray.unshift(record)
@@ -266,8 +320,6 @@ export const CourseList = async (ctx) => {
             courseArray.push(record);
         }
     }
-
-    console.log(courseArray)
 
     ctx.status = 200
     ctx.body = {
@@ -413,6 +465,7 @@ export const CreateCourse = async (ctx) => {
         sort: Joi.string().required(),
         name: Joi.string().required(),
         target: Joi.string().required(),
+        teacher: Joi.string().required(),
         capacity: Joi.number().required(),
         lectTime: Joi.string().required(),
         operTime: Joi.string().required(),
@@ -469,14 +522,14 @@ export const CreateCourse = async (ctx) => {
         "name": ctx.request.body.name,
         "target": ctx.request.body.target,
         "capacity": ctx.request.body.capacity,
+        "teacher": ctx.request.body.teacher,
         "studentSize": 0,
         "lectTime": ctx.request.body.lectTime,
         "operTime": ctx.request.body.operTime,
         "totalTime": ctx.request.body.totalTime,
         "content": ctx.request.body.content,
         "openTime": ctx.request.body.openTime,
-        "closeTime": ctx.request.body.closeTime,
-        "status": 1
+        "closeTime": ctx.request.body.closeTime
     });
 
     console.log(`Register - 새로운 강좌가 저장되었습니다.`);
