@@ -1,14 +1,11 @@
 export const UserInfo = (sequelize, DataTypes) => {
     return sequelize.define('user_info', {
-        userIdx: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true
-        },
         email: {
             type: DataTypes.STRING(60),
             allowNull: false,
-            unique: true
+            unique: true,
+            primaryKey: true,
+            autoIncrement: false
         },
         password: {
             type: DataTypes.STRING(100),
