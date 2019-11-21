@@ -8,6 +8,9 @@ import cors from '@koa/cors';
 const app = new Koa();
 const router = new Router();
 
+import { sequelize } from './models';
+sequelize.sync();
+
 import bodyParser from 'koa-bodyparser';
 
 app.use(cors());
